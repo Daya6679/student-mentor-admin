@@ -31,7 +31,12 @@ pipeline {
                     npx playwright install-deps
                     npm start &
                     SERVER_PID=$!
-                    sleep 10
+                    for i in {1..30}; do
+                        if curl -f http://localhost:3000/students.html >/dev/null 2>&1; then
+                            break
+                        fi
+                        sleep 2
+                    done
                     npx playwright test --reporter=line
                     TEST_EXIT=$?
                     kill $SERVER_PID
