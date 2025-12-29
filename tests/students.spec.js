@@ -9,7 +9,7 @@ test.describe('Student Admin Tool Tests', () => {
     await fs.writeFile(studentsFile, '[]');
 
     // Navigate to the students page
-    await page.goto('http://localhost:3000/students.html');
+    await page.goto('http://127.0.0.1:3000/students.html');
     // Wait for page to load
     await page.waitForSelector('h1');
     // Reload to ensure fresh data
