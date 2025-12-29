@@ -1,20 +1,20 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'NodeJS'
-    }
-
     environment {
         APP_NAME = 'student-mentor-admin'
     }
 
     stages {
 
-        stage('Verify Node & NPM') {
+        stage('Install NodeJS & Verify') {
             steps {
-                sh 'node -v'
-                sh 'npm -v'
+                sh '''
+                    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+                    sudo apt-get install -y nodejs
+                    node -v
+                    npm -v
+                '''
             }
         }
 
@@ -24,19 +24,18 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Run Tests') {
             steps {
-                sh 'npm run build || echo "No build step"'
+                sh 'npx playwright install'
+                sh 'npm start & sleep 5 && npx playwright test --reporter=line && pkill -f "node index.js"'
             }
         }
 
         stage('Deploy with PM2') {
             steps {
                 sh '''
-                  pm2 describe $APP_NAME >/dev/null 2>&1 || \
-                  pm2 start index.js --name student-mentor-admin 
-
-                  pm2 restart student-mentor-admin
+                  pm2 describe students-app-3000 >/dev/null 2>&1 && pm2 delete students-app-3000 || echo "App not running"
+                  pm2 start ecosystem.config.js --env production
                   pm2 save
                 '''
             }
