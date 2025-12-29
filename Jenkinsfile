@@ -2,13 +2,20 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJS'
+        nodejs 'NodeJS 18'
+    }
+
+    environment {
+        APP_NAME = 'student-mentor-admin'
     }
 
     stages {
-        stage('Check Node') {
+
+        stage('Verify Node & NPM') {
             steps {
+                sh 'echo "Node version:"'
                 sh 'node -v'
+                sh 'echo "NPM version:"'
                 sh 'npm -v'
             }
         }
@@ -21,18 +28,29 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'npm run build || echo "No build step"'
+                sh 'npm run build || echo "No build step found"'
             }
         }
 
         stage('Deploy with PM2') {
             steps {
                 sh '''
-                  pm2 restart student-mentor-admin || \
-                  pm2 start index.js --name student-mentor-admin
+                  pm2 describe $APP_NAME >/dev/null 2>&1 || \
+                  pm2 start index.js --name $APP_NAME
+
+                  pm2 restart $APP_NAME
                   pm2 save
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Deployment completed successfully'
+        }
+        failure {
+            echo '❌ Deployment failed – check logs above'
         }
     }
 }
