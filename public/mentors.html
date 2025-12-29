@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentor Admin Tool</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Mentor Admin Tool</h1>
+    <a href="index.html">Back to Login</a>
+
+    <h2>Add Mentor</h2>
+    <form id="addMentorForm">
+      <div class="form-group">
+        <label for="mentorName">Name:</label>
+        <input type="text" id="mentorName" required>
+      </div>
+      <div class="form-group">
+        <label for="mentorId">Mentor ID:</label>
+        <input type="text" id="mentorId" required>
+      </div>
+      <div class="form-group">
+        <label for="subjects">Subjects:</label>
+        <input type="text" id="subjects" required>
+      </div>
+      <div class="form-group">
+        <label for="classTimings">Class Timings:</label>
+        <input type="text" id="classTimings" required>
+      </div>
+      <button type="submit">Add Mentor</button>
+    </form>
+
+    <h2>Mentors List</h2>
+    <button id="exportMentorBtn" class="export-btn">Export to CSV</button>
+    <table id="mentorsTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Mentor ID</th>
+          <th>Subjects</th>
+          <th>Class Timings</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Edit Mentor</h2>
+      <form id="editForm">
+        <div class="form-group">
+          <label for="editName">Name:</label>
+          <input type="text" id="editName" required>
+        </div>
+        <div class="form-group">
+          <label for="editMentorId">Mentor ID:</label>
+          <input type="text" id="editMentorId" required>
+        </div>
+        <div class="form-group">
+          <label for="editSubjects">Subjects:</label>
+          <input type="text" id="editSubjects" required>
+        </div>
+        <div class="form-group">
+          <label for="editClassTimings">Class Timings:</label>
+          <input type="text" id="editClassTimings" required>
+        </div>
+        <button type="submit">Update Mentor</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('addMentorForm');
+    const tableBody = document.querySelector('#mentorsTable tbody');
+    const exportBtn = document.getElementById('exportMentorBtn');
+    const modal = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    const closeBtn = document.getElementsByClassName('close')[0];
+    let currentEditId = null;
+
+    // Load mentors on page load
+    loadMentors();
+
+    // Modal close
+    closeBtn.onclick = function() {
+      modal.style.display = "none";
+    }
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    // Edit form submit
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('editName').value;
+      const mentorId = document.getElementById('editMentorId').value;
+      const subjects = document.getElementById('editSubjects').value;
+      const classTimings = document.getElementById('editClassTimings').value;
+
+      const response = await fetch(`/api/mentors/${currentEditId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mentorId, subjects, classTimings })
+      });
+
+      if (response.ok) {
+        modal.style.display = "none";
+        loadMentors();
+      } else {
+        alert('Error updating mentor');
+      }
+    });
+
+    // Add mentor
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('mentorName').value;
+      const mentorId = document.getElementById('mentorId').value;
+      const subjects = document.getElementById('subjects').value;
+      const classTimings = document.getElementById('classTimings').value;
+
+      const response = await fetch('/api/mentors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mentorId, subjects, classTimings })
+      });
+
+      if (response.ok) {
+        form.reset();
+        loadMentors();
+      } else {
+        alert('Error adding mentor');
+      }
+    });
+
+    // Load mentors
+    async function loadMentors() {
+      const response = await fetch('/api/mentors');
+      const mentors = await response.json();
+      tableBody.innerHTML = '';
+      mentors.forEach(mentor => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${mentor.name}</td>
+          <td>${mentor.mentorId}</td>
+          <td>${mentor.subjects}</td>
+          <td>${mentor.classTimings}</td>
+          <td class="actions">
+            <button class="edit-btn" onclick="editMentor('${mentor.id}')">Edit</button>
+            <button class="delete-btn" onclick="deleteMentor('${mentor.id}')">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Edit mentor
+    async function editMentor(id) {
+      const response = await fetch('/api/mentors');
+      const mentors = await response.json();
+      const mentor = mentors.find(m => m.id === id);
+
+      if (mentor) {
+        currentEditId = id;
+        document.getElementById('editName').value = mentor.name;
+        document.getElementById('editMentorId').value = mentor.mentorId;
+        document.getElementById('editSubjects').value = mentor.subjects;
+        document.getElementById('editClassTimings').value = mentor.classTimings;
+        modal.style.display = "block";
+      }
+    }
+
+    // Delete mentor
+    async function deleteMentor(id) {
+      if (confirm('Are you sure you want to delete this mentor?')) {
+        const response = await fetch(`/api/mentors/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          loadMentors();
+        } else {
+          alert('Error deleting mentor');
+        }
+      }
+    }
+
+    // Export to CSV
+    exportBtn.addEventListener('click', () => {
+      window.location.href = '/api/mentors/export';
+    });
+  </script>
+</body>
+</html>
