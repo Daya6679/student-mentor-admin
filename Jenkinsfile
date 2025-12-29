@@ -29,16 +29,23 @@ pipeline {
                 sh '''
                     npx playwright install
                     npx playwright install-deps
-                    npm start &
+                    echo "Starting server..."
+                    HOST=0.0.0.0 npm start &
                     SERVER_PID=$!
+                    echo "Server PID: $SERVER_PID"
+                    echo "Waiting for server to be ready..."
                     for i in {1..30}; do
                         if curl -f http://127.0.0.1:3000/students.html >/dev/null 2>&1; then
+                            echo "Server is ready"
                             break
                         fi
+                        echo "Waiting... attempt $i"
                         sleep 2
                     done
+                    echo "Running tests..."
                     npx playwright test --reporter=line
                     TEST_EXIT=$?
+                    echo "Tests finished with exit code $TEST_EXIT"
                     kill $SERVER_PID
                     exit $TEST_EXIT
                 '''
