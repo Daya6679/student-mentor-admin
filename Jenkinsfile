@@ -11,7 +11,7 @@ pipeline {
             steps {
                 sh '''
                     curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-                    sudo apt-get install -y nodejs
+                    sudo apt-get install -y nodejs xvfb
                     node -v
                     npm -v
                 '''
@@ -43,7 +43,7 @@ pipeline {
                         sleep 2
                     done
                     echo "Running tests..."
-                    npx playwright test --reporter=line
+                    xvfb-run -a npx playwright test --reporter=line
                     TEST_EXIT=$?
                     echo "Tests finished with exit code $TEST_EXIT"
                     kill $SERVER_PID
