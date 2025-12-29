@@ -2,14 +2,19 @@ pipeline {
     agent any
 
     tools {
-        NodeJS 'NodeJS'
+        nodejs 'NodeJS'
     }
 
     stages {
-        stage('Install Dependencies') {
+        stage('Check Node') {
             steps {
                 sh 'node -v'
                 sh 'npm -v'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
                 sh 'npm install'
             }
         }
@@ -31,4 +36,3 @@ pipeline {
         }
     }
 }
-
