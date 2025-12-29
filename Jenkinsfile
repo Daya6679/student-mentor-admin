@@ -26,8 +26,16 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'npx playwright install'
-                sh 'npm start & sleep 5 && npx playwright test --reporter=line && pkill -f "node index.js"'
+                sh '''
+                    npx playwright install
+                    npm start &
+                    SERVER_PID=$!
+                    sleep 10
+                    npx playwright test --reporter=line
+                    TEST_EXIT=$?
+                    kill $SERVER_PID
+                    exit $TEST_EXIT
+                '''
             }
         }
 
