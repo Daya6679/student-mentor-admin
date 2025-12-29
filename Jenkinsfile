@@ -28,6 +28,7 @@ pipeline {
             steps {
                 sh '''
                     npx playwright install
+                    npx playwright install-deps
                     npm start &
                     SERVER_PID=$!
                     sleep 10
